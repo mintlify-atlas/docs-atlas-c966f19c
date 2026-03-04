@@ -1,0 +1,102 @@
+---
+title: Basic Simulation
+description: Create your first gravity simulation with minimal code
+---
+
+## Minimal Working Example
+
+This example shows the simplest possible gravity simulation. We'll create a canvas, add a single body, and set up the render loop.
+
+```typescript
+import { TinyCanvas } from './drawing/TinyCanvas.js'
+import Body from './Body/Body.js';
+
+const tc = new TinyCanvas("canvas");
+
+var bodies: Body[] = [];
+
+tc.loop((dt: number) => {
+     tc.clear();
+
+     for (let i = 0; i < bodies.length; i++) {
+          let body = bodies[i];
+          tc.circle(body.position.x, body.position.y, body.radius, body.color)
+          body.update(dt, bodies)
+     }
+})
+
+const Sun = new Body({
+     position: { x: tc.width / 2, y: tc.height / 2 },
+     mass: 1000000 * 10000000,
+     radius: 250,
+     color: 'orange'
+})
+
+bodies.push(Sun)
+```
+
+## What's Happening
+
+### 1. Creating a TinyCanvas
+
+```typescript
+const tc = new TinyCanvas("canvas");
+```
+
+This creates a new canvas instance that will handle all drawing operations. The parameter `"canvas"` is the HTML element ID.
+
+### 2. Creating a Body Array
+
+```typescript
+var bodies: Body[] = [];
+```
+
+We store all celestial bodies in an array. Each body will interact with every other body through gravity.
+
+### 3. The Render Loop
+
+```typescript
+tc.loop((dt: number) => {
+     tc.clear();
+
+     for (let i = 0; i < bodies.length; i++) {
+          let body = bodies[i];
+          tc.circle(body.position.x, body.position.y, body.radius, body.color)
+          body.update(dt, bodies)
+     }
+})
+```
+
+The loop function:
+- `dt` - Delta time in seconds between frames
+- `tc.clear()` - Clears the canvas each frame
+- `tc.circle()` - Draws each body at its current position
+- `body.update(dt, bodies)` - Updates the body's position based on gravitational forces from all other bodies
+
+### 4. Creating Your First Body
+
+```typescript
+const Sun = new Body({
+     position: { x: tc.width / 2, y: tc.height / 2 },
+     mass: 1000000 * 10000000,
+     radius: 250,
+     color: 'orange'
+})
+```
+
+- `position` - Starting coordinates (centered on canvas)
+- `mass` - Mass in arbitrary units (affects gravitational pull)
+- `radius` - Visual size in pixels
+- `color` - Any valid CSS color
+
+### 5. Adding to the Simulation
+
+```typescript
+bodies.push(Sun)
+```
+
+Add the body to the array so it will be rendered and updated each frame.
+
+## Next Steps
+
+This creates a single stationary body. To create orbital systems with multiple bodies, see [Solar System Example](/examples/solar-system).

@@ -1,0 +1,88 @@
+---
+title: Physics Model
+description: Understanding the core physics principles behind Gravity Sim
+---
+
+## Newton's Law of Universal Gravitation
+
+Gravity Sim is built on Newton's law of universal gravitation, which states that every particle attracts every other particle with a force proportional to the product of their masses and inversely proportional to the square of the distance between them:
+
+```
+F = G × (m₁ × m₂) / r²
+```
+
+Where:
+- `F` = gravitational force between two bodies
+- `G` = gravitational constant (6.674 × 10⁻¹¹ N⋅m²/kg²)
+- `m₁`, `m₂` = masses of the two bodies
+- `r` = distance between the centers of the two bodies
+
+## The Gravitational Constant
+
+The simulation uses the real-world gravitational constant:
+
+```typescript src/shared/shared.ts
+export const G: GType = 6.67430e-11;
+```
+
+This value determines the strength of gravitational interactions in the simulation. While small, it produces realistic orbital mechanics when combined with appropriate mass scales.
+
+## Vector-Based Force Calculations
+
+Gravity is a vector force—it has both magnitude and direction. The simulation calculates gravitational force as a 2D vector pointing from one body toward another.
+
+### Force Calculation Method
+
+The `calculateShellGravityForce` method computes the gravitational force that `body2` exerts on the current body:
+
+```typescript src/Body/Body.ts
+public calculateShellGravityForce(body2: Body): Vector2 {
+    const body1 = this;
+    const dx = body2.position.x - body1.position.x;
+    const dy = body2.position.y - body1.position.y;
+    let r = Math.sqrt(dx * dx + dy * dy);
+    
+    if (r < body1.radius + body2.radius) {
+        // this.resolveElasticCollision(body1, body2);
+    }
+
+    const m1 = body1.mass;
+    const m2 = body2.mass;
+    const R = body2.radius;
+
+    let forceMagnitude = 0;
+
+    if (r >= R) {
+        forceMagnitude = G * m1 * m2 / (r * r);
+    } else {
+        const effectiveMass = m2 * Math.pow(r / R, 3);
+        forceMagnitude = G * m1 * effectiveMass / (r * r);
+    }
+
+    const nx = dx / r;
+    const ny = dy / r;
+
+    return {
+        x: forceMagnitude * nx,
+        y: forceMagnitude * ny
+    };
+}
+```
+
+### Step-by-Step Breakdown
+
+1. **Calculate Distance Vector**: `dx` and `dy` represent the vector from `body1` to `body2`
+2. **Calculate Distance**: `r = √(dx² + dy²)` gives the scalar distance between bodies
+3. **Calculate Force Magnitude**: Using Newton's law, adjusted for shell theorem (see [Gravity Calculations](/concepts/gravity-calculations))
+4. **Normalize Direction**: `nx = dx/r` and `ny = dy/r` create a unit vector pointing toward `body2`
+5. **Apply Direction**: Multiply the force magnitude by the normalized direction to get the force vector
+
+## Why Vectors Matter
+
+Using vectors allows the simulation to:
+- Calculate forces in 2D space naturally
+- Accumulate multiple gravitational forces from different bodies
+- Derive acceleration, velocity, and position through vector arithmetic
+- Maintain directional information throughout the physics pipeline
+
+The force vector returned by `calculateShellGravityForce` represents both how strongly and in what direction `body2` pulls on `body1`.

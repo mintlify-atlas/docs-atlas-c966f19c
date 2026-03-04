@@ -1,0 +1,102 @@
+---
+title: Introduction
+description: A TypeScript-based gravitational physics simulation with real-time rendering
+---
+
+## What is Gravity Sim?
+
+Gravity Sim is a lightweight, browser-based physics engine that simulates gravitational interactions between celestial bodies in real-time. Built entirely in TypeScript, it demonstrates Newtonian gravity with support for both static and dynamic bodies, elastic collisions, and interactive controls.
+
+The simulation uses the shell theorem for accurate gravitational calculations, making it suitable for educational purposes, game development prototypes, or as a foundation for more complex physics simulations.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Real-Time Physics" icon="gauge-high">
+    Accurate gravitational force calculations using Newton's law of universal gravitation with the shell theorem for bodies at different distances
+  </Card>
+  
+  <Card title="Interactive Canvas" icon="hand-pointer">
+    Built on a custom TinyCanvas rendering engine with automatic FPS tracking, responsive resizing, and mouse interaction support
+  </Card>
+  
+  <Card title="TypeScript First" icon="code">
+    Fully typed codebase with strict type checking, making it easy to extend and modify with confidence
+  </Card>
+  
+  <Card title="Zero Dependencies" icon="feather">
+    No external libraries required - just TypeScript, HTML5 Canvas, and modern browser APIs
+  </Card>
+</CardGroup>
+
+## Use Cases for Physics Simulations
+
+Gravity Sim can serve as a foundation for various applications:
+
+- **Educational Tools**: Visualize orbital mechanics, gravitational fields, and multi-body interactions for physics education
+- **Game Prototyping**: Build space games, planetary systems, or gravity-based puzzles with realistic physics
+- **Algorithm Testing**: Experiment with numerical integration methods, collision detection, and force calculations
+- **Interactive Demos**: Create engaging web-based demonstrations of gravitational concepts
+
+## What You'll Learn
+
+Through this documentation, you'll discover how to:
+
+<Steps>
+  <Step title="Set up the simulation">
+    Install TypeScript, compile the project, and run your first simulation in the browser
+  </Step>
+  
+  <Step title="Create celestial bodies">
+    Configure bodies with custom mass, radius, position, velocity, and visual properties
+  </Step>
+  
+  <Step title="Understand the physics">
+    Learn how gravitational forces are calculated using the shell theorem and how bodies update their position each frame
+  </Step>
+  
+  <Step title="Customize the rendering">
+    Work with the TinyCanvas API to draw shapes, vectors, and text on the canvas
+  </Step>
+  
+  <Step title="Add interactivity">
+    Implement click handlers, keyboard controls, and dynamic body creation
+  </Step>
+</Steps>
+
+<Note>
+  The simulation runs entirely client-side in your browser - no server or build tools required beyond the TypeScript compiler.
+</Note>
+
+## Quick Example
+
+Here's how simple it is to create a Sun-Earth system:
+
+```typescript
+import { TinyCanvas } from './drawing/TinyCanvas.js'
+import Body from './Body/Body.js';
+
+const tc = new TinyCanvas("canvas");
+var bodies: Body[] = [];
+
+const Sun = new Body({
+  position: { x: tc.width / 2, y: tc.height / 2 },
+  mass: 1000000 * 10000000,
+  radius: 250,
+  color: 'orange',
+  isStatic: true
+})
+
+const Earth = new Body({
+  position: { x: tc.width / 3, y: tc.height / 3 },
+  mass: 1000000 * 100000,
+  radius: 45,
+  color: 'green'
+})
+
+bodies.push(Sun, Earth);
+```
+
+<Check>
+  Ready to get started? Head to the [Quickstart](/quickstart) guide to run your first simulation in under 5 minutes.
+</Check>

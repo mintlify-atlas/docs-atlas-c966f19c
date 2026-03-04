@@ -1,0 +1,350 @@
+---
+title: Types
+description: TypeScript type definitions and interfaces used throughout the Gravity Sim codebase.
+---
+
+## Overview
+
+This page documents the core TypeScript types and interfaces used in Gravity Sim, including vector types, body configuration, and physical constants.
+
+## Vector2
+
+<ParamField path="Vector2" type="{ x: number, y: number }">
+  Represents a 2D vector with x and y components.
+</ParamField>
+
+**Type Definition:**
+
+```typescript
+export type Vector2 = {
+  x: number;
+  y: number;
+};
+```
+
+**Description:**
+
+The `Vector2` type is used throughout the codebase to represent:
+- Position coordinates
+- Velocity vectors
+- Acceleration vectors
+- Force vectors
+
+**Usage Examples:**
+
+```typescript
+import type { Vector2 } from './types';
+
+// Position vector
+const position: Vector2 = { x: 100, y: 200 };
+
+// Velocity vector
+const velocity: Vector2 = { x: 0.5, y: -0.3 };
+
+// Zero vector
+const zero: Vector2 = { x: 0, y: 0 };
+
+// Vector addition
+function addVectors(v1: Vector2, v2: Vector2): Vector2 {
+  return {
+    x: v1.x + v2.x,
+    y: v1.y + v2.y
+  };
+}
+
+// Vector magnitude
+function magnitude(v: Vector2): number {
+  return Math.sqrt(v.x * v.x + v.y * v.y);
+}
+
+// Normalize vector
+function normalize(v: Vector2): Vector2 {
+  const mag = magnitude(v);
+  return {
+    x: v.x / mag,
+    y: v.y / mag
+  };
+}
+
+// Scale vector
+function scale(v: Vector2, scalar: number): Vector2 {
+  return {
+    x: v.x * scalar,
+    y: v.y * scalar
+  };
+}
+```
+
+## BodyConfig
+
+<ParamField path="BodyConfig" type="interface">
+  Configuration interface for creating Body instances.
+</ParamField>
+
+**Type Definition:**
+
+```typescript
+export type BodyConfig = {
+  position: Vector2;
+  velocity?: Vector2;
+  acceleration?: Vector2;
+  mass: number;
+  radius: number;
+  isStatic?: boolean;
+  color?: string;
+};
+```
+
+### Required Fields
+
+<ParamField path="position" type="Vector2" required>
+  The initial position of the body in 2D space.
+</ParamField>
+
+<ParamField path="mass" type="number" required>
+  The mass of the body in kilograms. Affects gravitational force calculations.
+</ParamField>
+
+<ParamField path="radius" type="number" required>
+  The radius of the body in pixels. Used for collision detection and rendering.
+</ParamField>
+
+### Optional Fields
+
+<ParamField path="velocity" type="Vector2" default="{ x: 0, y: 0 }">
+  The initial velocity vector. Defaults to zero if not specified.
+</ParamField>
+
+<ParamField path="acceleration" type="Vector2" default="{ x: 0, y: 0 }">
+  The initial acceleration vector. Defaults to zero if not specified.
+</ParamField>
+
+<ParamField path="isStatic" type="boolean" default="false">
+  Whether the body is static (fixed in place, not affected by forces). Defaults to false.
+</ParamField>
+
+<ParamField path="color" type="string" default="'white'">
+  The color used when rendering the body. Defaults to white if not specified.
+</ParamField>
+
+**Usage Examples:**
+
+```typescript
+import Body from './Body/Body.js';
+import type { BodyConfig } from './types';
+
+// Minimal configuration (required fields only)
+const minimalConfig: BodyConfig = {
+  position: { x: 100, y: 100 },
+  mass: 1000000,
+  radius: 50
+};
+
+const minimalBody = new Body(minimalConfig);
+
+// Full configuration with all optional fields
+const fullConfig: BodyConfig = {
+  position: { x: 400, y: 300 },
+  velocity: { x: 0.5, y: 0 },
+  acceleration: { x: 0, y: 0 },
+  mass: 1000000 * 10000000,
+  radius: 250,
+  isStatic: true,
+  color: 'orange'
+};
+
+const sun = new Body(fullConfig);
+
+// Practical example: Create Earth with orbital velocity
+const earthConfig: BodyConfig = {
+  position: { x: 200, y: 300 },
+  velocity: { x: 0, y: 0.8 },  // Initial orbital velocity
+  mass: 1000000 * 100000,
+  radius: 45,
+  color: 'green'
+};
+
+const earth = new Body(earthConfig);
+
+// Static body (won't move)
+const staticStar: BodyConfig = {
+  position: { x: 400, y: 400 },
+  mass: 2000000 * 10000000,
+  radius: 300,
+  isStatic: true,
+  color: 'yellow'
+};
+
+const star = new Body(staticStar);
+```
+
+## G (Gravitational Constant)
+
+<ParamField path="G" type="number">
+  The gravitational constant used in force calculations.
+</ParamField>
+
+**Type Definition:**
+
+```typescript
+export type G = 6.67430e-11; // in SI units
+```
+
+**Value:** `6.67430e-11` (SI units: m³⋅kg⁻¹⋅s⁻²)
+
+**Description:**
+
+The gravitational constant G is used in Newton's law of universal gravitation:
+
+```
+F = G * (m1 * m2) / r²
+```
+
+Where:
+- F is the gravitational force
+- G is the gravitational constant
+- m1 and m2 are the masses of the two bodies
+- r is the distance between the centers of the bodies
+
+**Usage Examples:**
+
+```typescript
+import { G } from './shared/shared.js';
+import type { Vector2 } from './types';
+
+// Calculate gravitational force between two bodies
+function calculateGravityForce(
+  m1: number,
+  m2: number,
+  r: number
+): number {
+  return G * m1 * m2 / (r * r);
+}
+
+// Calculate gravitational acceleration
+function calculateGravityAcceleration(
+  mass: number,
+  distance: number
+): number {
+  return G * mass / (distance * distance);
+}
+
+// Example: Force between Earth and Sun
+const sunMass = 1.989e30;  // kg
+const earthMass = 5.972e24; // kg
+const distanceToSun = 1.496e11; // meters
+
+const force = calculateGravityForce(sunMass, earthMass, distanceToSun);
+console.log('Gravitational force:', force, 'N');
+
+// Example: Calculate orbital velocity
+function orbitalVelocity(centralMass: number, radius: number): number {
+  return Math.sqrt(G * centralMass / radius);
+}
+
+const orbitalSpeed = orbitalVelocity(sunMass, distanceToSun);
+console.log('Orbital velocity:', orbitalSpeed, 'm/s');
+```
+
+## Type Utilities
+
+Here are some useful utility functions for working with these types:
+
+```typescript
+import type { Vector2, BodyConfig } from './types';
+
+// Vector operations
+class VectorMath {
+  static add(v1: Vector2, v2: Vector2): Vector2 {
+    return { x: v1.x + v2.x, y: v1.y + v2.y };
+  }
+
+  static subtract(v1: Vector2, v2: Vector2): Vector2 {
+    return { x: v1.x - v2.x, y: v1.y - v2.y };
+  }
+
+  static multiply(v: Vector2, scalar: number): Vector2 {
+    return { x: v.x * scalar, y: v.y * scalar };
+  }
+
+  static magnitude(v: Vector2): number {
+    return Math.sqrt(v.x * v.x + v.y * v.y);
+  }
+
+  static normalize(v: Vector2): Vector2 {
+    const mag = this.magnitude(v);
+    return mag === 0 ? { x: 0, y: 0 } : { x: v.x / mag, y: v.y / mag };
+  }
+
+  static distance(v1: Vector2, v2: Vector2): number {
+    const dx = v2.x - v1.x;
+    const dy = v2.y - v1.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  static dot(v1: Vector2, v2: Vector2): number {
+    return v1.x * v2.x + v1.y * v2.y;
+  }
+}
+
+// BodyConfig factory functions
+class BodyFactory {
+  static createPlanet(
+    x: number,
+    y: number,
+    mass: number,
+    radius: number,
+    color: string
+  ): BodyConfig {
+    return {
+      position: { x, y },
+      mass,
+      radius,
+      color
+    };
+  }
+
+  static createStar(
+    x: number,
+    y: number,
+    mass: number,
+    radius: number
+  ): BodyConfig {
+    return {
+      position: { x, y },
+      mass,
+      radius,
+      color: 'yellow',
+      isStatic: true
+    };
+  }
+
+  static createOrbiter(
+    centerX: number,
+    centerY: number,
+    orbitRadius: number,
+    orbitalSpeed: number,
+    mass: number,
+    radius: number,
+    color: string
+  ): BodyConfig {
+    return {
+      position: { x: centerX + orbitRadius, y: centerY },
+      velocity: { x: 0, y: orbitalSpeed },
+      mass,
+      radius,
+      color
+    };
+  }
+}
+
+// Usage
+const planet = BodyFactory.createPlanet(100, 100, 1e24, 50, 'blue');
+const star = BodyFactory.createStar(400, 400, 1e30, 200);
+const moon = BodyFactory.createOrbiter(100, 100, 150, 0.5, 1e22, 20, 'gray');
+```
+
+## See Also
+
+- [Body](/api/body) - Physics body class using these types
+- [TinyCanvas](/api/tiny-canvas) - Canvas rendering using Vector2 for positions

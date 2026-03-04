@@ -1,0 +1,268 @@
+---
+title: Interactive Controls
+description: Add mouse and keyboard interactivity to your simulation
+---
+
+## Adding Interactivity
+
+This example shows how to make your gravity simulation interactive with mouse clicks and keyboard modifiers.
+
+## Simple Velocity Control
+
+The `controlMove` function adds velocity to a body when you click anywhere on the screen:
+
+```typescript
+function controlMove() {
+     document.addEventListener('click', ()=>{
+          Earth.velocity.x += 0.3
+     })
+}
+
+controlMove();
+```
+
+Each click adds `0.3` units to Earth's horizontal velocity, allowing you to speed up or adjust its orbit interactively.
+
+## Advanced Dynamic Body Creation
+
+The `controlPlus` function enables creating different types of bodies with keyboard modifiers:
+
+```typescript
+function controlPlus() {
+     document.addEventListener('click', (e) => {
+          if (!e.shiftKey && !e.ctrlKey)
+               bodies.push(new Body({
+                    position: { x: e.pageX, y: e.pageY },
+                    mass: 1000000 * 10000000,
+                    radius: 250,
+                    color: 'orange',
+               }));
+     
+          if (e.altKey) {
+               bodies = []
+          }
+     
+          if (e.ctrlKey && !e.shiftKey) {
+               bodies.push(new Body({
+                    position: { x: e.pageX, y: e.pageY },
+                    mass: 1000000 * 10000000,
+                    radius: 250,
+                    color: 'orange',
+                    isStatic: true
+               }));
+          }
+     
+          if (e.ctrlKey && e.shiftKey) {
+               bodies.push(new Body({
+                    position: { x: e.pageX, y: e.pageY },
+                    mass: 1000000 * 1000000000,
+                    radius: 15,
+                    color: '#363636',
+               }))
+          }
+     
+          if (e.shiftKey && !e.ctrlKey)
+               bodies.push(new Body({
+                    position: { x: e.pageX, y: e.pageY },
+                    mass: 1000000 * 100000,
+                    radius: 65,
+                    color: 'green'
+               }))
+     })
+}
+
+controlPlus();
+```
+
+## Keyboard Modifiers
+
+### Regular Click (No Modifiers)
+
+```typescript
+if (!e.shiftKey && !e.ctrlKey)
+     bodies.push(new Body({
+          position: { x: e.pageX, y: e.pageY },
+          mass: 1000000 * 10000000,
+          radius: 250,
+          color: 'orange',
+     }));
+```
+
+**Creates**: Large orange star (dynamic)
+- Mass: `10,000,000,000,000`
+- Radius: 250px
+- Will move and interact with other bodies
+
+### Alt + Click
+
+```typescript
+if (e.altKey) {
+     bodies = []
+}
+```
+
+**Action**: Clear all bodies from the simulation
+- Resets the entire simulation
+- Useful for starting fresh
+
+### Ctrl + Click
+
+```typescript
+if (e.ctrlKey && !e.shiftKey) {
+     bodies.push(new Body({
+          position: { x: e.pageX, y: e.pageY },
+          mass: 1000000 * 10000000,
+          radius: 250,
+          color: 'orange',
+          isStatic: true
+     }));
+}
+```
+
+**Creates**: Large orange star (static)
+- Mass: `10,000,000,000,000`
+- Radius: 250px
+- **isStatic: true** - Won't move, acts as a fixed gravitational anchor
+- Perfect for creating suns or galaxy centers
+
+### Ctrl + Shift + Click
+
+```typescript
+if (e.ctrlKey && e.shiftKey) {
+     bodies.push(new Body({
+          position: { x: e.pageX, y: e.pageY },
+          mass: 1000000 * 1000000000,
+          radius: 15,
+          color: '#363636',
+     }))
+}
+```
+
+**Creates**: Small dense object (black hole/neutron star)
+- Mass: `1,000,000,000,000,000` - Extremely massive!
+- Radius: Only 15px
+- Color: Dark gray (`#363636`)
+- Very dense - small size but huge gravitational pull
+
+### Shift + Click
+
+```typescript
+if (e.shiftKey && !e.ctrlKey)
+     bodies.push(new Body({
+          position: { x: e.pageX, y: e.pageY },
+          mass: 1000000 * 100000,
+          radius: 65,
+          color: 'green'
+     }))
+```
+
+**Creates**: Green planet
+- Mass: `100,000,000,000`
+- Radius: 65px
+- Similar to Earth from the solar system example
+
+## Complete Interactive Example
+
+```typescript
+import { TinyCanvas } from './drawing/TinyCanvas.js'
+import Body from './Body/Body.js';
+
+const tc = new TinyCanvas("canvas");
+
+var bodies: Body[] = [];
+
+tc.loop((dt: number) => {
+     tc.clear();
+
+     for (let i = 0; i < bodies.length; i++) {
+          let body = bodies[i];
+          tc.circle(body.position.x, body.position.y, body.radius, body.color)
+          body.update(dt, bodies)
+     }
+
+     tc.text(tc.fps + "fps", tc.width - (140 + 70), 140, 70)
+})
+
+// Start with a static sun
+const Sun = new Body({
+     position: { x: tc.width / 2, y: tc.height / 2 },
+     mass: 1000000 * 10000000,
+     radius: 250,
+     color: 'orange',
+     isStatic: true
+})
+
+bodies.push(Sun)
+
+// Enable interactive body creation
+controlPlus();
+
+function controlPlus() {
+     document.addEventListener('click', (e) => {
+          if (!e.shiftKey && !e.ctrlKey)
+               bodies.push(new Body({
+                    position: { x: e.pageX, y: e.pageY },
+                    mass: 1000000 * 10000000,
+                    radius: 250,
+                    color: 'orange',
+               }));
+     
+          if (e.altKey) {
+               bodies = []
+          }
+     
+          if (e.ctrlKey && !e.shiftKey) {
+               bodies.push(new Body({
+                    position: { x: e.pageX, y: e.pageY },
+                    mass: 1000000 * 10000000,
+                    radius: 250,
+                    color: 'orange',
+                    isStatic: true
+               }));
+          }
+     
+          if (e.ctrlKey && e.shiftKey) {
+               bodies.push(new Body({
+                    position: { x: e.pageX, y: e.pageY },
+                    mass: 1000000 * 1000000000,
+                    radius: 15,
+                    color: '#363636',
+               }))
+          }
+     
+          if (e.shiftKey && !e.ctrlKey)
+               bodies.push(new Body({
+                    position: { x: e.pageX, y: e.pageY },
+                    mass: 1000000 * 100000,
+                    radius: 65,
+                    color: 'green'
+               }))
+     })
+}
+```
+
+## Usage Tips
+
+1. **Start Simple**: Begin with a static sun (Ctrl + Click)
+2. **Add Planets**: Use Shift + Click to add planets around your sun
+3. **Create Chaos**: Regular clicks add dynamic stars that interact with everything
+4. **Dense Objects**: Ctrl + Shift + Click creates small but massive objects with extreme gravity
+5. **Reset Anytime**: Alt + Click clears everything to start over
+
+## Quick Reference
+
+| Modifier | Result |
+|----------|--------|
+| Click | Dynamic star (orange, large) |
+| Shift + Click | Planet (green, medium) |
+| Ctrl + Click | Static star (orange, large, fixed) |
+| Ctrl + Shift + Click | Dense object (gray, tiny, very massive) |
+| Alt + Click | Clear all bodies |
+
+## Experiment Ideas
+
+- Create binary star systems with two static suns
+- Add multiple planets around a central star
+- Create chaotic systems with many dynamic bodies
+- Use dense objects to create black hole effects
+- Build galaxy-like structures with multiple gravitational centers

@@ -1,0 +1,402 @@
+---
+title: TinyCanvas
+description: The TinyCanvas class provides a simple canvas wrapper with rendering utilities and an animation loop for the gravity simulation.
+---
+
+## Overview
+
+The `TinyCanvas` class is a lightweight wrapper around the HTML5 Canvas API that provides:
+- Automatic canvas resizing
+- Animation loop with delta time calculation
+- FPS tracking
+- Mouse position tracking
+- Drawing utilities for circles, vectors, and text
+
+## Constructor
+
+<ParamField path="constructor" type="(canvasId?: string) => TinyCanvas">
+  Creates a new TinyCanvas instance and initializes the canvas.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="canvasId" type="string" default="'canvas'">
+  The HTML element ID of the canvas element to use.
+</ParamField>
+
+**Description:**
+
+The constructor automatically:
+- Gets the canvas element by ID
+- Sets up the 2D rendering context
+- Sizes the canvas to match window dimensions
+- Adds a resize event listener
+- Initializes mouse position tracking
+- Sets up FPS tracking
+
+**Example:**
+
+```typescript
+import { TinyCanvas } from './drawing/TinyCanvas.js';
+
+// Uses canvas with id="canvas"
+const tc = new TinyCanvas();
+
+// Or specify a custom canvas ID
+const tc2 = new TinyCanvas('myCanvas');
+```
+
+## Properties
+
+<ParamField path="width" type="number">
+  Current width of the canvas in pixels. Automatically updated on window resize.
+</ParamField>
+
+<ParamField path="height" type="number">
+  Current height of the canvas in pixels. Automatically updated on window resize.
+</ParamField>
+
+<ParamField path="fps" type="number">
+  Current frames per second. Updated every second during the animation loop.
+</ParamField>
+
+<ParamField path="dt" type="number">
+  Delta time in milliseconds since the last frame. Updated each frame in the loop.
+</ParamField>
+
+<ParamField path="mouse" type="{ x: number, y: number }">
+  Current mouse position relative to the canvas. Automatically updated on mousemove events.
+</ParamField>
+
+## Methods
+
+### loop
+
+<ParamField path="loop" type="(callback: (dt: number) => void) => void">
+  Starts the animation loop and executes the provided callback on each frame.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="callback" type="(dt: number) => void" required>
+  Function to execute on each frame. Receives delta time (dt) in milliseconds.
+</ParamField>
+
+**Description:**
+
+Starts a `requestAnimationFrame` loop that:
+- Calculates delta time between frames
+- Updates FPS counter every second
+- Calls the provided callback with delta time
+- Automatically continues the loop
+
+**Example:**
+
+```typescript
+const tc = new TinyCanvas();
+const bodies: Body[] = [];
+
+tc.loop((dt: number) => {
+  // Clear canvas
+  tc.clear();
+  
+  // Update and render all bodies
+  for (let body of bodies) {
+    tc.circle(body.position.x, body.position.y, body.radius, body.color);
+    body.update(dt, bodies);
+  }
+  
+  // Display FPS
+  tc.text(tc.fps + 'fps', tc.width - 210, 140, 70);
+});
+```
+
+### clear
+
+<ParamField path="clear" type="(color?: string) => void">
+  Clears the entire canvas with the specified color.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="color" type="string" default="'black'">
+  The fill color for the background.
+</ParamField>
+
+**Example:**
+
+```typescript
+// Clear with default black background
+tc.clear();
+
+// Clear with custom color
+tc.clear('#1a1a1a');
+tc.clear('rgb(25, 25, 25)');
+```
+
+### circle
+
+<ParamField path="circle" type="(x: number, y: number, r: number, color?: string) => void">
+  Draws a filled circle on the canvas.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="x" type="number" required>
+  The x-coordinate of the circle's center.
+</ParamField>
+
+<ParamField path="y" type="number" required>
+  The y-coordinate of the circle's center.
+</ParamField>
+
+<ParamField path="r" type="number" required>
+  The radius of the circle in pixels.
+</ParamField>
+
+<ParamField path="color" type="string" default="'white'">
+  The fill color of the circle.
+</ParamField>
+
+**Example:**
+
+```typescript
+// Draw a white circle
+tc.circle(400, 300, 50);
+
+// Draw a colored circle
+tc.circle(100, 100, 25, 'orange');
+tc.circle(200, 200, 30, '#00ff00');
+
+// Draw bodies
+for (let body of bodies) {
+  tc.circle(body.position.x, body.position.y, body.radius, body.color);
+}
+```
+
+### drawVector
+
+<ParamField path="drawVector" type="(origin: Vector2, vector: Vector2, color?: string, scale?: number) => void">
+  Draws a vector arrow on the canvas starting from a given origin point.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="origin" type="Vector2" required>
+  The starting point of the vector.
+</ParamField>
+
+<ParamField path="vector" type="Vector2" required>
+  The vector to draw (will be scaled by the scale parameter).
+</ParamField>
+
+<ParamField path="color" type="string" default="'white'">
+  The color of the vector line.
+</ParamField>
+
+<ParamField path="scale" type="number" default="1">
+  Scale factor to multiply the vector by for visualization.
+</ParamField>
+
+**Description:**
+
+Draws a line from the origin point to `origin + vector * scale`. The line has a width of 6 pixels.
+
+**Example:**
+
+```typescript
+// Draw velocity vector in green
+tc.drawVector(
+  body.position,
+  body.velocity,
+  'green',
+  110  // Scale up for visibility
+);
+
+// Draw acceleration vector in red
+tc.drawVector(
+  body.position,
+  body.acceleration,
+  'red',
+  100000  // Scale up significantly for visibility
+);
+
+// Draw force vector
+tc.drawVector(
+  { x: 100, y: 100 },
+  body.netForce,
+  'blue',
+  0.001
+);
+```
+
+### text
+
+<ParamField path="text" type="(txt: string, x: number, y: number, size?: number, color?: string) => void">
+  Draws text on the canvas at the specified position.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="txt" type="string" required>
+  The text string to draw.
+</ParamField>
+
+<ParamField path="x" type="number" required>
+  The x-coordinate of the text position.
+</ParamField>
+
+<ParamField path="y" type="number" required>
+  The y-coordinate of the text position.
+</ParamField>
+
+<ParamField path="size" type="number" default="16">
+  The font size in pixels.
+</ParamField>
+
+<ParamField path="color" type="string" default="'white'">
+  The text color.
+</ParamField>
+
+**Description:**
+
+Draws text using a sans-serif font at the specified size and color.
+
+**Example:**
+
+```typescript
+// Display speed
+const speed = (body.speed * 1000 / 36).toFixed(2);
+tc.text(speed + 'cm/s', 140, 140, 70);
+
+// Display FPS in top-right corner
+tc.text(tc.fps + 'fps', tc.width - 210, 140, 70);
+
+// Display debug info
+tc.text('Bodies: ' + bodies.length, 10, 20, 16, 'lime');
+tc.text('Mouse: ' + tc.mouse.x + ', ' + tc.mouse.y, 10, 40, 16);
+```
+
+## Complete Example
+
+```typescript
+import { TinyCanvas } from './drawing/TinyCanvas.js';
+import Body from './Body/Body.js';
+
+const tc = new TinyCanvas('canvas');
+const bodies: Body[] = [];
+
+// Create bodies
+const Sun = new Body({
+  position: { x: tc.width / 2, y: tc.height / 2 },
+  mass: 1000000 * 10000000,
+  radius: 250,
+  color: 'orange',
+  isStatic: true
+});
+
+const Earth = new Body({
+  position: { x: tc.width / 3, y: tc.height / 3 },
+  mass: 1000000 * 100000,
+  radius: 45,
+  color: 'green'
+});
+
+bodies.push(Sun, Earth);
+
+// Start animation loop
+tc.loop((dt: number) => {
+  // Clear with black background
+  tc.clear();
+  
+  // Update and render each body
+  for (let i = 0; i < bodies.length; i++) {
+    let body = bodies[i];
+    
+    // Draw the body
+    tc.circle(body.position.x, body.position.y, body.radius, body.color);
+    
+    // Draw velocity vector (optional)
+    tc.drawVector(
+      body.position,
+      body.velocity,
+      'green',
+      110
+    );
+    
+    // Draw acceleration vector (optional)
+    tc.drawVector(
+      body.position,
+      body.acceleration,
+      'red',
+      100000
+    );
+    
+    // Update physics
+    body.update(dt, bodies);
+  }
+  
+  // Display speed of last body
+  const lastBody = bodies[bodies.length - 1];
+  if (lastBody) {
+    const speedCmPerSec = (lastBody.speed * 1000 / 36).toFixed(2);
+    tc.text(speedCmPerSec + 'cm/s', 140, 140, 70);
+  }
+  
+  // Display FPS
+  tc.text(tc.fps + 'fps', tc.width - 210, 140, 70);
+});
+
+// Mouse tracking example
+document.addEventListener('click', (e) => {
+  // Add body at mouse position
+  bodies.push(new Body({
+    position: { x: tc.mouse.x, y: tc.mouse.y },
+    mass: 1000000 * 100000,
+    radius: 30,
+    color: 'cyan'
+  }));
+});
+```
+
+## Features
+
+### Automatic Resizing
+
+The canvas automatically resizes when the browser window is resized:
+
+```typescript
+window.addEventListener('resize', () => {
+  console.log('New size:', tc.width, 'x', tc.height);
+});
+```
+
+### Mouse Tracking
+
+Access the current mouse position at any time:
+
+```typescript
+tc.loop((dt) => {
+  // Draw a circle at mouse position
+  tc.circle(tc.mouse.x, tc.mouse.y, 5, 'red');
+  
+  // Display coordinates
+  tc.text(`(${tc.mouse.x}, ${tc.mouse.y})`, tc.mouse.x + 10, tc.mouse.y - 10);
+});
+```
+
+### FPS Tracking
+
+The FPS counter is automatically updated every second:
+
+```typescript
+tc.loop((dt) => {
+  console.log('Current FPS:', tc.fps);
+  console.log('Delta time:', dt, 'ms');
+});
+```
+
+## See Also
+
+- [Body](/api/body) - Physics body class
+- [Types](/api/types) - TypeScript type definitions including Vector2

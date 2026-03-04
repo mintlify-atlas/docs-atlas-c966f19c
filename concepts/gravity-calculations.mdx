@@ -1,0 +1,129 @@
+---
+title: Gravity Calculations
+description: How Gravity Sim implements the shell theorem and calculates forces between bodies
+---
+
+## The Shell Theorem
+
+Gravity Sim implements the **shell theorem**, which describes how spherically symmetric bodies interact gravitationally:
+
+1. **Outside the body** (`r ≥ R`): The body acts as if all its mass were concentrated at its center
+2. **Inside the body** (`r < R`): Only the mass within radius `r` contributes to the gravitational force
+
+This creates realistic behavior when bodies occupy the same space, rather than infinite forces at zero distance.
+
+## Gravity Outside vs Inside Massive Bodies
+
+The `calculateShellGravityForce` method implements both cases:
+
+```typescript src/Body/Body.ts
+let forceMagnitude = 0;
+
+if (r >= R) {
+    // Outside the body: use full mass
+    forceMagnitude = G * m1 * m2 / (r * r);
+} else {
+    // Inside the body: use effective mass
+    const effectiveMass = m2 * Math.pow(r / R, 3);
+    forceMagnitude = G * m1 * effectiveMass / (r * r);
+}
+```
+
+### Outside the Body
+
+When `body1` is outside `body2` (distance `r` is greater than or equal to `body2`'s radius `R`), the full mass `m2` is used:
+
+```
+F = G × m₁ × m₂ / r²
+```
+
+This is standard Newtonian gravity.
+
+### Inside the Body
+
+When `body1` is inside `body2`, only the sphere of mass within radius `r` contributes to the force. The effective mass scales with the volume ratio:
+
+```
+effectiveMass = m₂ × (r/R)³
+```
+
+This prevents unrealistic singularities and models how gravity decreases as you move toward the center of a massive body.
+
+## The calculateAllForces Method
+
+The `calculateAllForces` method orchestrates gravity calculations between one body and all others:
+
+```typescript src/Body/Body.ts
+public calculateAllForces(bodies: Body[]) {
+    const body = this;
+    const memory = []
+
+    for (let i = 0; i < bodies.length; i++) {
+        let body2 = bodies[i];
+
+        if (body == body2) {
+            continue;
+        }
+
+        let force = this.calculateShellGravityForce(body2)
+        memory.push(force);
+    }
+
+    for (let i = 0; i < memory.length; i++) {
+        this.netForce.x += memory[i].x;
+        this.netForce.y += memory[i].y;
+    }
+}
+```
+
+### How It Works
+
+1. **Iterate Through All Bodies**: Loop through every body in the simulation
+2. **Skip Self**: Don't calculate gravity from a body to itself
+3. **Calculate Individual Forces**: Compute the force vector from each other body
+4. **Store Forces**: Keep all force vectors in the `memory` array
+5. **Accumulate Net Force**: Sum all force vectors component-wise to get the total force
+
+## Net Force Accumulation
+
+Gravity from multiple bodies is additive. If a planet is between two stars, it experiences:
+
+```
+F_net = F_star1 + F_star2
+```
+
+The simulation accumulates forces by adding vector components:
+
+```typescript
+this.netForce.x += memory[i].x;
+this.netForce.y += memory[i].y;
+```
+
+This net force determines the body's acceleration in the next step.
+
+## From Force to Acceleration
+
+Newton's second law relates force to acceleration:
+
+```
+F = m × a  →  a = F / m
+```
+
+This conversion happens in the `update` method:
+
+```typescript src/Body/Body.ts
+this.acceleration.x = this.netForce.x / this.mass;
+this.acceleration.y = this.netForce.y / this.mass;
+```
+
+More massive bodies experience less acceleration from the same force—this is **inertia**. A planet is harder to move than an asteroid, even if both experience the same gravitational force.
+
+## Performance Considerations
+
+The force calculation is **O(n²)** where `n` is the number of bodies:
+- Each body calls `calculateAllForces`
+- Each call loops through all other bodies
+- With 10 bodies: 90 force calculations per frame
+- With 100 bodies: 9,900 force calculations per frame
+
+For large simulations, consider spatial partitioning or approximation algorithms like Barnes-Hut.

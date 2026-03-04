@@ -1,0 +1,191 @@
+---
+title: Simulation Loop
+description: How Gravity Sim animates physics frame by frame using delta time and the update cycle
+---
+
+## The Animation Loop
+
+Gravity Sim uses the **TinyCanvas** class to manage the animation loop. The `loop` method provides a continuous update-render cycle:
+
+```typescript src/drawing/TinyCanvas.ts
+public loop(callback: (dt: number) => void): void {
+    let last = performance.now();
+    const animate = (now: number) => {
+        this.frameCount++;
+
+        this.dt = now - last;
+        last = now;
+        if (now - this.lastFpsUpdate >= 1000) {
+            this.fps = this.frameCount;
+            this.frameCount = 0;
+            this.lastFpsUpdate = now;
+        }
+
+        callback(this.dt);
+        requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+}
+```
+
+### How It Works
+
+1. **Request Animation Frame**: The browser calls `animate` before each repaint (typically 60 FPS)
+2. **Calculate Delta Time**: `dt = now - last` measures milliseconds since the last frame
+3. **Track FPS**: Count frames per second for performance monitoring
+4. **Execute Callback**: Run the simulation update with `dt`
+5. **Loop Continuously**: Request the next frame
+
+## Delta Time Explained
+
+**Delta time (dt)** is the elapsed time between frames, measured in milliseconds. It's crucial for framerate-independent physics.
+
+### Why Delta Time Matters
+
+Without `dt`, physics would run at different speeds on different devices:
+- 60 FPS monitor: Body moves 60 steps per second
+- 144 FPS monitor: Body moves 144 steps per second (2.4× faster!)
+
+With `dt`, motion scales by elapsed time:
+- Fast frame (6ms): Small position update
+- Slow frame (20ms): Larger position update
+- Result: Consistent speed regardless of framerate
+
+### Units
+
+In Gravity Sim, `dt` is in **milliseconds**:
+- 60 FPS ≈ 16.67ms per frame
+- 30 FPS ≈ 33.33ms per frame
+- Faster frames = smaller `dt` values
+
+## The Main Simulation Loop
+
+The `main.ts` file sets up the core update-render cycle:
+
+```typescript src/main.ts
+tc.loop((dt: number) => {
+     tc.clear();
+
+     for (let i = 0; i < bodies.length; i++) {
+          let body = bodies[i];
+          tc.circle(body.position.x, body.position.y, body.radius, body.color)
+          body.update(dt, bodies)
+     }
+
+     tc.text((bodies[bodies.length - 1]?.speed * 1000 / 36).toFixed(2) + 'cm/s', 140, 140, 70)
+     tc.text(tc.fps + "fps", tc.width - (140 + 70), 140, 70)
+})
+```
+
+### Frame Cycle
+
+Each frame:
+1. **Clear Canvas**: Erase the previous frame
+2. **Draw Bodies**: Render each body as a circle at its current position
+3. **Update Physics**: Call `body.update(dt, bodies)` for each body
+4. **Display Stats**: Show speed and FPS on screen
+
+## The Body.update Method
+
+The `update` method is the heart of the physics simulation. It transforms forces into motion:
+
+```typescript src/Body/Body.ts
+public update(dt: number, bodies: Body[]) {
+    if (this.isStatic)
+        return;
+    this.calculateAllForces(bodies);
+
+    // F = ma -> a = F/m
+    // a = acceleration
+    // F = N
+    // m = mass
+    this.acceleration.x = this.netForce.x / this.mass;
+    this.acceleration.y = this.netForce.y / this.mass;
+
+
+    this.velocity.x += this.acceleration.x * dt;
+    this.velocity.y += this.acceleration.y * dt;
+
+    this.position.x += this.velocity.x * dt;
+    this.position.y += this.velocity.y * dt;
+
+    // reset netForce for the next frame
+    this.calculateSpeed();
+    this.netForce = { x: 0, y: 0 };
+}
+```
+
+### The Update Cycle Breakdown
+
+#### 1. Calculate Forces
+```typescript
+this.calculateAllForces(bodies);
+```
+Compute the total gravitational force from all other bodies. See [Gravity Calculations](/concepts/gravity-calculations) for details.
+
+#### 2. Force → Acceleration (F = ma)
+```typescript
+this.acceleration.x = this.netForce.x / this.mass;
+this.acceleration.y = this.netForce.y / this.mass;
+```
+Convert force to acceleration using Newton's second law. Heavier bodies accelerate less from the same force.
+
+#### 3. Acceleration → Velocity
+```typescript
+this.velocity.x += this.acceleration.x * dt;
+this.velocity.y += this.acceleration.y * dt;
+```
+Acceleration changes velocity over time. Multiplying by `dt` scales the change to the frame duration.
+
+#### 4. Velocity → Position
+```typescript
+this.position.x += this.velocity.x * dt;
+this.position.y += this.velocity.y * dt;
+```
+Velocity changes position over time. This moves the body to its new location.
+
+#### 5. Reset for Next Frame
+```typescript
+this.calculateSpeed();
+this.netForce = { x: 0, y: 0 };
+```
+Update the speed magnitude and reset forces to zero, ready for the next frame's calculations.
+
+## Static Bodies
+
+Bodies with `isStatic: true` skip the entire update:
+
+```typescript
+if (this.isStatic)
+    return;
+```
+
+Static bodies don't move, but they still exert gravitational forces on other bodies. This is useful for:
+- Fixed stars in orbital simulations
+- Immovable gravitational anchors
+- Testing scenarios
+
+## Frame Rate and Performance
+
+The simulation tracks FPS to help diagnose performance:
+
+```typescript
+tc.text(tc.fps + "fps", tc.width - (140 + 70), 140, 70)
+```
+
+### Performance Tips
+
+- **Target: 60 FPS** – Smooth animations and consistent physics
+- **Below 30 FPS** – Physics may become unstable, consider:
+  - Reducing the number of bodies
+  - Simplifying force calculations
+  - Using a physics timescale multiplier
+
+### Physics Stability
+
+Large `dt` values (slow framerates) can cause:
+- Bodies passing through each other
+- Orbital decay or energy gain
+- Unstable oscillations
+
+The simulation uses simple Euler integration, which works well when `dt` is small and consistent.

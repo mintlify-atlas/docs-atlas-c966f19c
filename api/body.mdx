@@ -1,0 +1,313 @@
+---
+title: Body
+description: The Body class represents a physical object in the gravity simulation with mass, position, velocity, and acceleration.
+---
+
+## Overview
+
+The `Body` class is the core component of the Gravity Sim physics engine. Each body represents a physical object affected by gravitational forces from other bodies. Bodies can be dynamic (affected by gravity) or static (fixed in place).
+
+## Constructor
+
+<ParamField path="constructor" type="(config: BodyConfig) => Body">
+  Creates a new Body instance with the specified configuration.
+</ParamField>
+
+### BodyConfig Interface
+
+<ParamField path="position" type="Vector2" required>
+  The initial position of the body in 2D space.
+</ParamField>
+
+<ParamField path="mass" type="number" required>
+  The mass of the body in kilograms. Affects gravitational force calculations.
+</ParamField>
+
+<ParamField path="radius" type="number" required>
+  The radius of the body in pixels. Used for collision detection and rendering.
+</ParamField>
+
+<ParamField path="velocity" type="Vector2" default="{ x: 0, y: 0 }">
+  The initial velocity vector of the body.
+</ParamField>
+
+<ParamField path="acceleration" type="Vector2" default="{ x: 0, y: 0 }">
+  The initial acceleration vector of the body.
+</ParamField>
+
+<ParamField path="isStatic" type="boolean" default="false">
+  Whether the body is static (fixed in place, not affected by forces).
+</ParamField>
+
+<ParamField path="color" type="string" default="'white'">
+  The color used when rendering the body.
+</ParamField>
+
+### Example
+
+```typescript
+import Body from './Body/Body.js';
+
+// Create a static sun
+const Sun = new Body({
+  position: { x: 400, y: 300 },
+  mass: 1000000 * 10000000,
+  radius: 250,
+  color: 'orange',
+  isStatic: true
+});
+
+// Create a dynamic planet
+const Earth = new Body({
+  position: { x: 200, y: 200 },
+  mass: 1000000 * 100000,
+  radius: 45,
+  color: 'green'
+});
+```
+
+## Properties
+
+<ParamField path="position" type="Vector2">
+  Current position of the body in 2D space.
+</ParamField>
+
+<ParamField path="velocity" type="Vector2">
+  Current velocity vector of the body.
+</ParamField>
+
+<ParamField path="speed" type="number">
+  Current speed magnitude calculated from velocity. Updated by `calculateSpeed()`.
+</ParamField>
+
+<ParamField path="acceleration" type="Vector2">
+  Current acceleration vector of the body.
+</ParamField>
+
+<ParamField path="mass" type="number">
+  Mass of the body in kilograms.
+</ParamField>
+
+<ParamField path="radius" type="number">
+  Radius of the body in pixels.
+</ParamField>
+
+<ParamField path="netForce" type="Vector2">
+  The net force vector acting on the body. Reset each frame after position update.
+</ParamField>
+
+<ParamField path="isStatic" type="boolean">
+  Whether the body is static and unaffected by forces.
+</ParamField>
+
+<ParamField path="color" type="string">
+  The color of the body used for rendering.
+</ParamField>
+
+## Methods
+
+### update
+
+<ParamField path="update" type="(dt: number, bodies: Body[]) => void">
+  Updates the body's state for a single frame based on gravitational forces from other bodies.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="dt" type="number" required>
+  Delta time in milliseconds since the last frame.
+</ParamField>
+
+<ParamField path="bodies" type="Body[]" required>
+  Array of all bodies in the simulation (including this body).
+</ParamField>
+
+**Description:**
+
+The `update` method performs the following steps:
+1. Skips update if the body is static
+2. Calculates all gravitational forces from other bodies
+3. Computes acceleration using F = ma (a = F/m)
+4. Updates velocity based on acceleration
+5. Updates position based on velocity
+6. Calculates current speed
+7. Resets net force for the next frame
+
+**Example:**
+
+```typescript
+const bodies = [Sun, Earth, Mars];
+
+tc.loop((dt: number) => {
+  for (let body of bodies) {
+    body.update(dt, bodies);
+  }
+});
+```
+
+### calculateAllForces
+
+<ParamField path="calculateAllForces" type="(bodies: Body[]) => void">
+  Calculates the total gravitational force acting on this body from all other bodies.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="bodies" type="Body[]" required>
+  Array of all bodies in the simulation.
+</ParamField>
+
+**Description:**
+
+Iterates through all bodies, calculates the gravitational force from each using `calculateShellGravityForce`, and accumulates them into the `netForce` property.
+
+### calculateShellGravityForce
+
+<ParamField path="calculateShellGravityForce" type="(body2: Body) => Vector2">
+  Calculates the gravitational force vector exerted on this body by another body using the shell theorem.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="body2" type="Body" required>
+  The body exerting gravitational force on this body.
+</ParamField>
+
+**Returns:** `Vector2` - The force vector.
+
+**Description:**
+
+This method implements the shell theorem for gravitational force:
+- If the distance r >= radius of body2: Uses standard Newton's law F = G * m1 * m2 / r²
+- If r < radius of body2: Treats body2 as a shell and calculates effective mass based on the volume within distance r
+
+The force is calculated as:
+```
+forceMagnitude = G * m1 * m2 / r²  (outside)
+forceMagnitude = G * m1 * (m2 * (r/R)³) / r²  (inside)
+```
+
+### applyAcceleration
+
+<ParamField path="applyAcceleration" type="(acceleration: Vector2) => void">
+  Sets the acceleration vector of the body.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="acceleration" type="Vector2" required>
+  The acceleration vector to apply.
+</ParamField>
+
+### applyNetForce
+
+<ParamField path="applyNetForce" type="(force: Vector2) => void">
+  Sets the net force vector acting on the body.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="force" type="Vector2" required>
+  The force vector to apply.
+</ParamField>
+
+### resolveElasticCollision
+
+<ParamField path="resolveElasticCollision" type="(body1: Body, body2: Body) => void">
+  Resolves an elastic collision between two bodies using conservation of momentum.
+</ParamField>
+
+**Parameters:**
+
+<ParamField path="body1" type="Body" required>
+  The first body in the collision.
+</ParamField>
+
+<ParamField path="body2" type="Body" required>
+  The second body in the collision.
+</ParamField>
+
+**Description:**
+
+This method implements elastic collision physics:
+1. Checks if bodies are moving toward each other
+2. Calculates collision angle
+3. Rotates velocity vectors to collision coordinate system
+4. Applies 1D conservation of momentum equations
+5. Rotates velocities back to world coordinates
+6. Updates both bodies' velocities
+
+The collision equations use:
+```
+v1 = u1 * (m1 - m2) / (m1 + m2) + u2 * 2 * m2 / (m1 + m2)
+v2 = u2 * (m2 - m1) / (m1 + m2) + u1 * 2 * m1 / (m1 + m2)
+```
+
+### calculateSpeed
+
+<ParamField path="calculateSpeed" type="() => void">
+  Calculates and updates the speed property based on the current velocity vector.
+</ParamField>
+
+**Description:**
+
+Computes the magnitude of the velocity vector:
+```
+speed = √(vx² + vy²)
+```
+
+## Complete Example
+
+```typescript
+import { TinyCanvas } from './drawing/TinyCanvas.js';
+import Body from './Body/Body.js';
+
+const tc = new TinyCanvas("canvas");
+const bodies: Body[] = [];
+
+// Create a sun
+const Sun = new Body({
+  position: { x: tc.width / 2, y: tc.height / 2 },
+  mass: 1000000 * 10000000,
+  radius: 250,
+  color: 'orange',
+  isStatic: true
+});
+
+// Create Earth with initial velocity
+const Earth = new Body({
+  position: { x: tc.width / 3, y: tc.height / 3 },
+  mass: 1000000 * 100000,
+  radius: 45,
+  color: 'green'
+});
+
+bodies.push(Sun, Earth);
+
+// Animation loop
+tc.loop((dt: number) => {
+  tc.clear();
+  
+  for (let body of bodies) {
+    // Draw the body
+    tc.circle(body.position.x, body.position.y, body.radius, body.color);
+    
+    // Update physics
+    body.update(dt, bodies);
+  }
+  
+  // Display Earth's speed
+  const speedInCmPerSec = (Earth.speed * 1000 / 36).toFixed(2);
+  tc.text(speedInCmPerSec + 'cm/s', 140, 140, 70);
+});
+
+// Add interactivity
+document.addEventListener('click', () => {
+  Earth.velocity.x += 0.3;
+});
+```
+
+## See Also
+
+- [TinyCanvas](/api/tiny-canvas) - Canvas rendering and animation loop
+- [Types](/api/types) - TypeScript type definitions including Vector2 and BodyConfig

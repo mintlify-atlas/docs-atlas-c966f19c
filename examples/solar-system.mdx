@@ -1,0 +1,133 @@
+---
+title: Solar System Example
+description: Create a Sun and Earth orbital system
+---
+
+## Sun and Earth Orbit
+
+This example demonstrates how to create a realistic orbital system with a massive central star and an orbiting planet.
+
+## Complete Code
+
+```typescript
+import { TinyCanvas } from './drawing/TinyCanvas.js'
+import Body from './Body/Body.js';
+
+const tc = new TinyCanvas("canvas");
+
+var bodies: Body[] = [];
+
+tc.loop((dt: number) => {
+     tc.clear();
+
+     for (let i = 0; i < bodies.length; i++) {
+          let body = bodies[i];
+          tc.circle(body.position.x, body.position.y, body.radius, body.color)
+          body.update(dt, bodies)
+     }
+
+     tc.text((bodies[bodies.length - 1]?.speed * 1000 / 36).toFixed(2) + 'cm/s', 140, 140, 70)
+     tc.text(tc.fps + "fps", tc.width - (140 + 70), 140, 70)
+})
+
+const Sun = new Body({
+     position: { x: tc.width / 2, y: tc.height / 2 },
+     mass: 1000000 * 10000000,
+     radius: 250,
+     color: 'orange',
+     isStatic: true
+})
+
+const Earth = new Body({
+     position: { x: tc.width / 3, y: tc.height / 3 },
+     mass: 1000000 * 100000,
+     radius: 45,
+     color: 'green'
+})
+
+bodies.push(Sun)
+bodies.push(Earth)
+```
+
+## Understanding the Setup
+
+### The Sun Configuration
+
+```typescript
+const Sun = new Body({
+     position: { x: tc.width / 2, y: tc.height / 2 },
+     mass: 1000000 * 10000000,
+     radius: 250,
+     color: 'orange',
+     isStatic: true
+})
+```
+
+**Key Properties:**
+
+- **Position**: Centered on the canvas (`tc.width / 2, tc.height / 2`)
+- **Mass**: `10,000,000,000,000` - Very large mass to create strong gravitational pull
+- **Radius**: `250` pixels - Visually large to represent a star
+- **Color**: `'orange'` - Classic star color
+- **isStatic**: `true` - **Critical!** This prevents the Sun from moving in response to gravitational forces. Without this, the Sun would drift toward other bodies.
+
+### The Earth Configuration
+
+```typescript
+const Earth = new Body({
+     position: { x: tc.width / 3, y: tc.height / 3 },
+     mass: 1000000 * 100000,
+     radius: 45,
+     color: 'green'
+})
+```
+
+**Key Properties:**
+
+- **Position**: Offset from the Sun (`tc.width / 3, tc.height / 3`)
+- **Mass**: `100,000,000,000` - 100 times smaller than the Sun
+- **Radius**: `45` pixels - Much smaller than the Sun
+- **Color**: `'green'` - Represents Earth
+- **No isStatic**: Earth is dynamic and will respond to the Sun's gravity
+
+### Mass Ratios
+
+The Sun is 100 times more massive than Earth:
+- Sun: `1000000 * 10000000 = 10,000,000,000,000`
+- Earth: `1000000 * 100000 = 100,000,000,000`
+
+This ratio creates realistic orbital mechanics where the Sun dominates gravitationally.
+
+### Creating Stable Orbits
+
+For Earth to orbit rather than crash into the Sun or fly away, you need to give it initial velocity. Add this after creating Earth:
+
+```typescript
+Earth.velocity.x = 0.3  // Tangential velocity for orbit
+```
+
+The velocity direction should be perpendicular to the line between the Sun and Earth to create a circular orbit.
+
+## Displaying Information
+
+The example also shows how to display real-time information:
+
+```typescript
+tc.text((bodies[bodies.length - 1]?.speed * 1000 / 36).toFixed(2) + 'cm/s', 140, 140, 70)
+tc.text(tc.fps + "fps", tc.width - (140 + 70), 140, 70)
+```
+
+- Shows the speed of the last body (Earth) converted to cm/s
+- Shows current FPS in the top-right corner
+
+## Color Choices
+
+- **Orange**: Traditional star color (yellow-orange main sequence stars)
+- **Green**: Represents Earth's vegetation and oceans
+- **Blue**: Could represent water worlds or ice giants
+- **Red**: Could represent Mars or red giants
+- **Gray/Dark**: Could represent asteroids or black holes
+
+## Next Steps
+
+To add interactive controls and create bodies dynamically, see [Interactive Controls](/examples/interactive-controls).
