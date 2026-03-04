@@ -1,0 +1,71 @@
+{
+  "projectType": "frontend",
+  "projectName": "Gravity Sim",
+  "projectDescription": "A TypeScript-based N-body gravitational physics simulation with real-time HTML5 Canvas rendering.",
+  "theme": "aspen",
+  "primaryColor": "#FF6B35",
+  "lightColor": "#4ECDC4",
+  "darkColor": "#1A1A2E",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "quickstart",
+          "installation"
+        ]
+      },
+      {
+        "group": "Core Concepts",
+        "pages": [
+          "concepts/physics-model",
+          "concepts/gravity-calculations",
+          "concepts/simulation-loop"
+        ]
+      },
+      {
+        "group": "API Reference",
+        "pages": [
+          "api/body",
+          "api/tiny-canvas",
+          "api/types"
+        ]
+      },
+      {
+        "group": "Examples",
+        "pages": [
+          "examples/basic-simulation",
+          "examples/solar-system",
+          "examples/interactive-controls"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "N-body gravitational physics simulation using Newton's law of universal gravitation",
+    "Shell theorem implementation for accurate gravity inside massive bodies",
+    "Real-time rendering with HTML5 Canvas and performance monitoring",
+    "Interactive controls for adding celestial bodies and manipulating orbits",
+    "Vector-based physics with velocity, acceleration, and force calculations",
+    "Support for static and dynamic bodies with configurable mass and radius"
+  ],
+  "publicApiSurface": [
+    "Body class - Represents a celestial body with position, velocity, mass, and physics calculations",
+    "Body.constructor(config: BodyConfig) - Creates a new body with configuration",
+    "Body.update(dt: number, bodies: Body[]) - Updates body physics for the current frame",
+    "Body.calculateAllForces(bodies: Body[]) - Calculates net gravitational forces from all other bodies",
+    "Body.calculateShellGravityForce(body2: Body) - Calculates gravity force using shell theorem",
+    "Body.applyAcceleration(acceleration: Vector2) - Applies acceleration to the body",
+    "Body.resolveElasticCollision(body1: Body, body2: Body) - Handles elastic collision between bodies",
+    "TinyCanvas class - Lightweight HTML5 Canvas wrapper for rendering",
+    "TinyCanvas.loop(callback: (dt: number) => void) - Starts animation loop with delta time",
+    "TinyCanvas.circle(x: number, y: number, r: number, color?: string) - Draws a filled circle",
+    "TinyCanvas.drawVector(origin: Vector2, vector: Vector2, color?: string, scale?: number) - Draws a vector arrow",
+    "TinyCanvas.text(txt: string, x: number, y: number, size?: number, color?: string) - Renders text",
+    "TinyCanvas.clear(color?: string) - Clears the canvas",
+    "Vector2 type - 2D vector with x and y components",
+    "BodyConfig type - Configuration object for creating bodies",
+    "G constant - Gravitational constant (6.67430e-11)"
+  ]
+}
